@@ -1,5 +1,7 @@
 package com.artemis.the.gr8.playerstats.core;
 
+import cn.yvmou.ylib.YLib;
+import cn.yvmou.ylib.impl.scheduler.UniversalRunnable;
 import com.artemis.the.gr8.playerstats.api.PlayerStats;
 import com.artemis.the.gr8.playerstats.api.StatNumberFormatter;
 import com.artemis.the.gr8.playerstats.api.StatTextFormatter;
@@ -23,7 +25,6 @@ import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,6 +37,7 @@ import java.util.List;
 public final class Main extends JavaPlugin implements PlayerStats {
 
     private static JavaPlugin pluginInstance;
+    private static YLib yLib;
     private static PlayerStats playerStatsAPI;
     private static ConfigHandler config;
 
@@ -93,6 +95,13 @@ public final class Main extends JavaPlugin implements PlayerStats {
         return pluginInstance;
     }
 
+    public static @NotNull YLib getYLib() throws IllegalStateException {
+        if (yLib == null) {
+            throw new IllegalStateException("PlayerStats is not loaded!");
+        }
+            return yLib;
+    }
+
     public static @NotNull PlayerStats getPlayerStatsAPI() throws IllegalStateException {
         if (playerStatsAPI == null) {
             throw new IllegalStateException("PlayerStats does not seem to be loaded!");
@@ -107,6 +116,7 @@ public final class Main extends JavaPlugin implements PlayerStats {
      */
     private void initializeMainClassesInOrder() {
         pluginInstance = this;
+        yLib = new YLib(this);
         playerStatsAPI = this;
         config = ConfigHandler.getInstance();
 
@@ -151,7 +161,7 @@ public final class Main extends JavaPlugin implements PlayerStats {
      * Setup bstats
      */
     private void setupMetrics() {
-        new BukkitRunnable() {
+        new UniversalRunnable() {
             @Override
             public void run() {
                 final Metrics metrics = new Metrics(pluginInstance, 15923);
@@ -167,7 +177,7 @@ public final class Main extends JavaPlugin implements PlayerStats {
                 }
                 metrics.addCustomChart(new SimplePie("using_placeholder_expansion", () -> placeholderExpansionActive ? "yes" : "no"));
             }
-        }.runTaskLaterAsynchronously(this, 200);
+        }.runLaterAsync(this, 200);
     }
 
     @Override
